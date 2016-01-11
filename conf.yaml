@@ -144,3 +144,33 @@ repository:
                     action: comment
                     comment: |
                         This PR was merged without a milestone attached.
+        -
+            name: hotness - mild
+            conditions:
+                - state: 'open'
+                - plus__ge: 5
+                - title_contains__not: '[PROCEDURES]'
+            actions:
+                -
+                    action: assign_tag
+                    action_value: 'hotness/mild'
+        -
+            name: hotness - medium
+            conditions:
+                - state: 'open'
+                - plus__ge: 10
+                - title_contains__not: '[PROCEDURES]'
+            actions:
+                -
+                    action: assign_tag
+                    action_value: 'hotness/medium'
+        -
+            name: hotness - spicy
+            conditions:
+                - state: 'open'
+                - plus__ge: 15
+                - title_contains__not: '[PROCEDURES]'
+            actions:
+                -
+                    action: assign_tag
+                    action_value: 'hotness/spicy'
