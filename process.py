@@ -20,6 +20,7 @@ gh = Github(
 
 UPVOTE_REGEX = '(:\+1:|^\s*\+1\s*$)'
 DOWNVOTE_REGEX = '(:\-1:|^\s*\-1\s*$)'
+COMMAND_REGEX = '^\s*@?{bot_user}\s+([^\r\n]*)'
 
 
 class PullRequestFilter(object):
@@ -154,6 +155,36 @@ class PullRequestFilter(object):
             # log.debug('%s, "%s" => %s', regex, resource.body, re.match(regex, resource.body))
             if re.findall(regex, comment.body, re.MULTILINE):
                 yield comment
+
+    def check_has_new_comments(self, pr, cv=None):
+        """Checks if a PR has new comments since the last time this PR was checked
+        """
+        if getattr(pr, 'memo_comments', None) is None:
+            pr.memo_comments = list(pr.get_comments())
+
+        last_comment_time = getattr(pr, '_last_update_time', datetime.datetime.utcfromtimestamp(-1))
+        for comment in pr.memo_comments:
+            if comment.created_at > last_comment_time:
+                return True
+
+        return False
+
+    def check_command_is(self, pr, cv=None):
+        """
+        """
+        if getattr(pr, 'memo_comments', None) is None:
+            pr.memo_comments = list(pr.get_comments())
+
+        command_regex = COMMAND_REGEX.format(bot_user=self.bot_user)
+        last_comment_time = getattr(pr, '_last_update_time', datetime.datetime.utcfromtimestamp(-1))
+        for comment in pr.memo_comments:
+            match = re.match(regex, comment.body)
+            if match and (comment.user.login in self.committer_group) and \
+               (command_comment.created_at > last_comment_time) and \
+               (match.group(0) == cv):
+               return True
+
+        return False
 
     def check_plus(self, pr, cv=None):
         if getattr(pr, 'memo_comments', None) is None:
@@ -362,6 +393,7 @@ class MergerBot(object):
                 cached_pr_time = cached_pr[1]
                 if cached_pr_time != resource.updated_at:
                     log.debug('[%s] Cache says: %s last updated at %s', resource.number, cached_pr_time, resource.updated_at)
+                    setattr(resource, '_last_update_time', cached_pr_time)
                     changed_prs.append(resource)
         return changed_prs
 
